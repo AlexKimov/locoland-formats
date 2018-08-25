@@ -1,0 +1,126 @@
+//------------------------------------------------
+//--- 010 Editor v8.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+typedef enum <char> {
+  PAL,
+  SURF,
+  DATA
+} IDENTIFIER;
+
+struct {
+  char Magic[4];
+  UINT Size <name="File size">;
+} FILE_HEADER;
+
+struct {
+  char Name[8];
+  UINT Size;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Size;
+  UINT16 Unknown;
+  UINT16 Unknown;
+  UINT16 Count;
+  UINT16 Width;
+  UINT16 Height;
+} VID_HEADER;
+
+IDENTIFIER ID[4];
+
+typedef struct {
+  UBYTE R;
+  UBYTE G;
+  UBYTE B;
+} PALETTE24;
+
+typedef struct {
+  UBYTE R;
+  UBYTE G;
+  UBYTE B;
+  UBYTE A;
+} PALETTE32;
+
+BitfieldDisablePadding();
+typedef struct {
+  BYTE R: 1;
+  BYTE G: 5;
+  BYTE B: 5;
+  BYTE A: 5;
+} RGB16;
+
+if (ID == "PAL ")
+{
+  struct {
+    UINT Size;
+    UINT Unknown;
+    UINT Unknown;
+    UINT Count;
+    UINT Size;
+  } PAL_HEADER;
+  if (PAL_HEADER.Size == 768)
+    PALETTE24 Palette[256];
+  else
+    PALETTE32 Palette[256];
+}
+else if (ID != "DATA")
+{
+  struct {
+    UINT Size;
+    UINT Unknown;
+    UINT Unknown;
+    UINT Count1;
+    UINT Size;
+    UINT16 Count2;
+  } SURF_HEADER;
+  typedef struct {
+    UINT16 Width;
+    UINT16 Height;
+    UINT Size;
+    BYTE Image1Indexes[Size];
+    if (SURF_HEADER.Count2 > 1)
+    {
+      UINT Size;
+      RGB16 Pixels[65536];
+    };
+  } SURF_IMAGE_DATA <name="Image data">;
+  typedef struct (int arraySize) {
+    SURF_IMAGE_DATA array[arraySize] <optimize=false>;
+  } SURF_IMAGES; 
+  if (SURF_HEADER.Count2 == 1)      
+    SURF_IMAGES SurfImages(SURF_HEADER.Count2);
+  else
+    SURF_IMAGES SurfImages(SURF_HEADER.Count2/2); 
+};
+
+struct { 
+  IDENTIFIER ID[4];  
+} DATA;
+struct {
+  UINT Size;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Count;
+} DATA_HEADER;
+typedef struct {
+  UINT Size;
+  UINT Size;
+  BYTE Indexes[Size];
+} IMAGE_DATA <name="Image data">;
+typedef struct (int arraySize) {
+  IMAGE_DATA array[arraySize] <optimize=false>;
+} IMAGES;    
+if (DATA_HEADER.Count > 1)     
+  IMAGES Images(DATA_HEADER.Count);
+else
+  BYTE Image[DATA_HEADER.Size];

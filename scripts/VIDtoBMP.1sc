@@ -1,0 +1,230 @@
+//------------------------------------------------
+//--- 010 Editor v8.0.1 Script File
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+//   History: 
+//------------------------------------------------
+
+local uchar RGBQ[4];
+local uchar palette[256*4];
+local uchar Buffer[10485760] = 0; // file buffer
+local uint palsize, W, H, i, width, height, FileIndex, FileNew, NewFile, size, count, pos ;
+local char bfType[2];
+local uchar ID[4];
+local string FileName, Path;
+local WORD bfReserved1, bfReserved2, biPlanes, biBitCount; 
+local DWORD bfSize, bfOffBits, biSize, biWidth, biHeight, biCompression, biSizeImage, biXPelsPerMeter, biYPelsPerMeter, biClrUsed, biClrImportant, biRMask, biGMask, biBMask, biAMask; 
+
+string IntToStr (uint i) {
+  local string s;
+  SPrintf(s, "%d", i);
+  return s;
+} 
+
+void createFile(string index, uchar Buffer[], uint filesize, uint type, uint width, uint height) 
+{
+  FileNew("Hex");
+
+  size = width*height*2;
+  // BMP Header
+  bfType = "BM";
+  WriteBytes(bfType, 0, 2);
+  FSkip(2);
+
+  if (type == 3)
+    bfSize = size + 1078;
+  else
+    bfSize = size + 70;
+
+  WriteInt(FTell(), bfSize);
+  FSkip(4);
+
+  bfReserved1 = 0;
+  WriteShort(FTell(), bfReserved1 );
+  FSkip(2);
+  bfReserved2 = 0;
+  WriteShort(FTell(), bfReserved2 );
+  FSkip(2);
+
+  if (type == 3)
+    bfOffBits = 1078;
+  else
+    bfOffBits = 70;
+  WriteInt(FTell(), bfOffBits);
+  FSkip(4);
+
+  biSize = 56;
+  WriteInt(FTell(), biSize);
+  FSkip(4);
+
+  biWidth = width;
+  WriteInt(FTell(), biWidth);
+  FSkip(4);
+  biHeight = -height;
+  WriteInt(FTell(), biHeight);
+  FSkip(4);
+
+  biPlanes = 1;
+  WriteShort(FTell(), biPlanes );
+  FSkip(2);
+
+  if (type == 3)
+    biBitCount = 8;
+  else
+    biBitCount = 16;
+  WriteInt(FTell(), biBitCount);
+  FSkip(2);
+  biCompression = 3;
+  WriteInt(FTell(), biCompression);
+  FSkip(4);
+  biSizeImage = size;
+  WriteInt(FTell(), biSizeImage);
+  FSkip(4);
+
+  biXPelsPerMeter = 3780;
+  WriteInt(FTell(), biXPelsPerMeter );
+  FSkip(4);
+  biYPelsPerMeter = 3780;
+  WriteInt(FTell(), biYPelsPerMeter);
+  FSkip(4);
+  biClrUsed = 0;
+  WriteInt(FTell(), biClrUsed);
+  FSkip(4);
+  biClrImportant = 0;
+  WriteInt(FTell(), biClrImportant);
+  FSkip(4);
+
+  if (type == 1)
+  {
+    biRMask = 63488;
+    biGMask = 2016;
+    biBMask = 31;
+    biAMask = 0;
+  }
+  else 
+  {
+    biRMask = 3840;
+    biGMask = 240;
+    biBMask = 240;
+    biAMask = 0;
+  };
+
+  if (type != 3)  
+  {
+    WriteInt(FTell(), biRMask);
+    FSkip(4);
+    WriteInt(FTell(), biGMask);
+    FSkip(4);
+    WriteInt(FTell(), biBMask);
+    FSkip(4);
+    WriteInt(FTell(), biAMask);
+    FSkip(4);
+  };
+ 
+  if (exists(palette))
+  {
+    WriteBytes(palette, FTell(), 1024);
+    FSkip(1024); 
+  };
+ 
+  WriteBytes(Buffer, FTell(), filesize);
+  FileSave(Path + index + ".bmp");
+  FileClose();
+  FileSelect(FileIndex);
+};
+
+FileIndex = GetFileNum();
+FileName = FileNameGetBase(GetFileName());
+Path = GetFileName() + "(unpacked)\\";
+MakeDir(Path);
+
+FSkip(42); 
+W = ReadShort(FTell());
+FSkip(2);
+H = ReadShort(FTell());
+FSkip(2);
+local float imagesize = W*H*2;
+local uchar ImageBuffer[imagesize];
+
+ReadBytes(ID, FTell(), 4);
+FSkip(4);
+
+if (ID == "PAL ")
+{
+  FSkip(16);
+  palsize = ReadInt(FTell());
+  FSkip(4);
+  if (palsize == 1024)
+  {
+    ReadBytes(palette, FTell(), 1024);
+    FSkip(1024); 
+  }  
+  else
+  {
+    for ( i = 0; i < 256 ; ++i )
+    {
+      ReadBytes(RGBQ, FTell(), 3);
+      FSkip(3); 
+      Memcpy(palette, RGBQ, 4, pos, 0);
+      pos += 4;
+    };
+  };
+  FSkip(4);
+} 
+else
+if (ID != "DATA")
+{
+  pos = 0;
+  FSkip(20);
+  count = ReadShort(FTell());
+  FSkip(2);
+
+  i = 0;
+  while ( i < count )
+  {
+    width = ReadShort(FTell());
+    FSkip(2);
+    height = ReadShort(FTell());
+    FSkip(2);
+
+    size = ReadInt(FTell());
+    FSkip(4);   
+
+    ReadBytes(Buffer, FTell(), size); 
+    FSkip(size);  
+
+    createFile(IntToStr(i + 1), Buffer, size, 1, width, height);
+
+    //pos += size;
+    if (count > 1) 
+    {
+      size = ReadInt(FTell());
+      FSkip(4); 
+
+      ReadBytes(Buffer, FTell(), size);  
+      FSkip(size); 
+    
+      createFile(IntToStr(i + 1) + "(mask)", Buffer, size, 2, width, height);    
+    }
+    i += 2;
+  };
+  FSkip(4);
+  //createFile(FileName, ImageBuffer, imagesize, 1, W, H);
+};
+
+FSkip(12);
+count = ReadShort(FTell());
+FSkip(4);
+for ( i = 0; i < count ; ++i )  
+{
+  FSkip(4);
+  size = ReadInt(FTell());
+  FSkip(4);  
+  ReadBytes(Buffer, FTell(), size); 
+  FSkip(size);     
+  createFile(IntToStr(i + 1) , Buffer, size, 3, 120, 120);
+};
