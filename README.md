@@ -8,7 +8,7 @@
 ***
 # About
 
-**Steamland/Locoland game** (2003) file formats. 010 Editor [templates](https://github.com/AlexKimov/locoland-formats/tree/master/templates) and [scripts](https://github.com/AlexKimov/locoland-formats/tree/master/scripts)
+**Steamland/Locoland game** (2003) file formats. 010 Editor [templates](https://github.com/AlexKimov/locoland-formats/tree/master/templates) and [scripts](https://github.com/AlexKimov/locoland-formats/tree/master/scripts).
 
 | № | Формат | Прогресс  | Шаблон |  Описание   |
 | :-- | :------- | :-- | :-- | :-- |
