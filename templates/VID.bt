@@ -11,6 +11,9 @@
 //   History: 
 //------------------------------------------------
 
+local float size;
+local uint pos, count0;
+
 typedef enum <char> {
   PAL,
   SURF,
@@ -29,14 +32,12 @@ struct {
   UINT Unknown;
   UINT Unknown;
   UINT Size;
+  UINT16 Type0;
   UINT16 Unknown;
-  UINT16 Unknown;
-  UINT16 Count;
+  UINT16 SpriteCount; // 1 - texture atlas, >1 multiple sprites
   UINT16 Width;
   UINT16 Height;
 } VID_HEADER;
-
-IDENTIFIER ID[4];
 
 typedef struct {
   UBYTE R;
@@ -51,76 +52,145 @@ typedef struct {
   UBYTE A;
 } PALETTE32;
 
+typedef struct {
+  UBYTE A;
+  UBYTE B;
+  if (B > 10) fgjdfj(0);
+} RGB;
+
 BitfieldDisablePadding();
 typedef struct {
-  BYTE R: 1;
-  BYTE G: 5;
-  BYTE B: 5;
-  BYTE A: 5;
+  UBYTE R: 5;
+  UBYTE G: 6;
+  UBYTE B: 5;
 } RGB16;
 
-if (ID == "PAL ")
-{
-  struct {
-    UINT Size;
-    UINT Unknown;
-    UINT Unknown;
-    UINT Count;
-    UINT Size;
-  } PAL_HEADER;
-  if (PAL_HEADER.Size == 768)
-    PALETTE24 Palette[256];
-  else
-    PALETTE32 Palette[256];
-}
-else if (ID != "DATA")
-{
-  struct {
-    UINT Size;
-    UINT Unknown;
-    UINT Unknown;
-    UINT Count1;
-    UINT Size;
-    UINT16 Count2;
-  } SURF_HEADER;
-  typedef struct {
-    UINT16 Width;
-    UINT16 Height;
-    UINT Size;
-    BYTE Image1Indexes[Size];
-    if (SURF_HEADER.Count2 > 1)
-    {
-      UINT Size;
-      RGB16 Pixels[65536];
-    };
-  } SURF_IMAGE_DATA <name="Image data">;
-  typedef struct (int arraySize) {
-    SURF_IMAGE_DATA array[arraySize] <optimize=false>;
-  } SURF_IMAGES; 
-  if (SURF_HEADER.Count2 == 1)      
-    SURF_IMAGES SurfImages(SURF_HEADER.Count2);
-  else
-    SURF_IMAGES SurfImages(SURF_HEADER.Count2/2); 
-};
 
-struct { 
-  IDENTIFIER ID[4];  
-} DATA;
-struct {
-  UINT Size;
-  UINT Unknown;
-  UINT Unknown;
-  UINT Count;
-} DATA_HEADER;
-typedef struct {
-  UINT Size;
-  UINT Size;
-  BYTE Indexes[Size];
-} IMAGE_DATA <name="Image data">;
-typedef struct (int arraySize) {
-  IMAGE_DATA array[arraySize] <optimize=false>;
-} IMAGES;    
-if (DATA_HEADER.Count > 1)     
-  IMAGES Images(DATA_HEADER.Count);
-else
-  BYTE Image[DATA_HEADER.Size];
+while (!FEof())
+{  
+  struct {
+    IDENTIFIER id[4];
+  } INDENTIFIER;
+  switch (INDENTIFIER.id)
+  {
+    case "PAL ":
+      struct {
+        UINT Size;
+        UINT Unknown;
+        UINT Unknown;
+        UINT Count;
+        UINT PaletteSize;
+      } PAL_HEADER;
+      if (PAL_HEADER.PaletteSize == 768)
+        PALETTE24 Palette[256];
+      else
+        PALETTE32 Palette[256];    
+    break;  
+  
+    case "SURF":
+      struct {
+        UINT Size;
+        UINT Unknown;
+        UINT Unknown;
+        UINT Count1;
+        UINT Size;
+        UINT16 Count2;
+      } SURF_HEADER;
+      typedef struct {
+        UINT16 Width;
+        UINT16 Height;
+        UINT Size;
+        size = 23*Width*Height/23;
+        RGB16 Data1[size];
+        if (VID_HEADER.SpriteCount == 1 && SURF_HEADER.Count2 > 1)
+        {
+          UINT Size;
+          RGB Data2[size];
+        };
+      } SURF_IMAGE_DATA <name="Image data">;
+      typedef struct (int arraySize) {
+        SURF_IMAGE_DATA array[arraySize] <optimize=false>;
+      } SURF_IMAGES; 
+      if (SURF_HEADER.Count2 > 1 && VID_HEADER.SpriteCount == 1)     
+        SURF_IMAGES SurfImages(SURF_HEADER.Count2/2);
+      else
+        SURF_IMAGES SurfImages(SURF_HEADER.Count2); 
+    break;
+
+    default: 
+      struct {
+        UINT Size;
+        UINT Unknown;
+        UINT Unknown;
+        UINT Count;
+      } DATA_HEADER;
+
+      typedef struct {
+        UINT Size;
+        UINT Size1;   
+        if (exists(PAL_HEADER))
+        {
+          pos = 0;
+          count0 = 0;
+          struct {
+            while (pos < Size1)
+            {
+              UBYTE Size;
+              UBYTE Count;
+              //if (Size == 0 && Count == 0)
+              count0 += Size;
+              pos += 2;
+              if (Count > 0 && Count < 255)
+              {
+                struct {
+                  if (Count > 1)
+                  {
+                    if (Size > 0) 
+                    {
+                      struct {
+                        UBYTE U1;
+                        UBYTE U2;
+                      } DATA01[Count];
+                      UBYTE Data02[Count]; 
+                      pos += 3*Count;
+                    }
+                    else
+                    {
+                      struct {
+                        UBYTE U1;
+                      } DATA01[Count]; 
+                      pos += Count;                     
+                    } 
+                  } 
+                  else
+                  {
+                    UBYTE U1;
+                    pos += 1;
+                    if (Size > 0)
+                    { 
+                      UBYTE U2;
+                      pos += 1;
+                      if (U2 > 0)
+                      {
+                        UBYTE U3;
+                        pos += 1;
+                      }
+                    }
+                  } 
+                } D;
+              }
+            } 
+          } DATA;
+          //Printf("%d ", count0); 
+        } 
+        else
+          BYTE Data[Size - 4];    
+      } IMAGE_DATA <name="Image data">;
+
+      typedef struct (int arraySize) {
+         IMAGE_DATA array[arraySize] <optimize=false>;
+      } IMAGES;    
+   
+      IMAGES Images(DATA_HEADER.Count);   
+  }
+}
