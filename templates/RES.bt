@@ -1,0 +1,73 @@
+//------------------------------------------------
+//--- 010 Editor v8.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+local uint size;
+
+struct {
+  char Magic[4];
+  UINT Size <name="File size">;
+} FILE_HEADER;
+
+struct {
+  char Name[8];
+  UINT Size;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Count;
+} DATAOBJ_HEADER;
+
+struct {
+  struct {
+    UINT Size;
+    UINT Index;
+    size = ReadStringLength(FTell());
+    string Name;
+    BYTE UnknownData[608];
+    FLOAT X;
+    FLOAT Y;
+    FLOAT Z;
+    string FileName;
+  } U[DATAOBJ_HEADER.Count] <optimize=false>;
+} DATAOBJ_DATA;
+
+BYTE A;
+
+struct {
+  char Name[4];
+  UINT Size;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Count;
+} CNST_HEADER;
+
+BYTE Data1[CNST_HEADER.Size - 12];
+
+struct {
+  char Name[4];
+  UINT Size;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Count;
+} WEAP_HEADER;
+
+BYTE Data2[WEAP_HEADER.Size - 12];
+
+struct {
+  char Name[4];
+  UINT Size;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Count;
+} SFX_HEADER;
+
+BYTE Data3[SFX_HEADER.Size - 12];
