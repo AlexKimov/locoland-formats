@@ -12,7 +12,7 @@
 //------------------------------------------------
 
 local float size;
-local uint pos, count0;
+local uint pos, line, i, z;
 
 typedef enum <char> {
   PAL,
@@ -126,65 +126,66 @@ while (!FEof())
       } DATA_HEADER;
 
       typedef struct {
-        UINT Size;
+        UINT Size0;
         UINT Size1;   
+
+        if (Size1 == 2)
+          UINT16 Empty;
+        else
         if (exists(PAL_HEADER))
         {
           pos = 0;
-          count0 = 0;
+          line = 0;
+
+          UINT16 dcount;
+          if (dcount > 0)
+            struct {
+              UINT16 U[dcount*3];
+            } UNKNOWN_DATA; 
+
+          UINT16 YOffset;
+          UINT16 SpriteHeight;
+
           struct {
-            while (pos < Size1)
+            while (line < SpriteHeight)
             {
-              UBYTE Size;
-              UBYTE Count;
-              //if (Size == 0 && Count == 0)
-              count0 += Size;
-              pos += 2;
-              if (Count > 0 && Count < 255)
-              {
-                struct {
-                  if (Count > 1)
+              struct {
+                UBYTE XOffset;
+                UBYTE Count;
+
+                if (XOffset == 0 && Count == 0)
+                    break;
+
+                if (XOffset >= 0)
+                {
+                  do
                   {
-                    if (Size > 0) 
+                    if (Count > 0)
                     {
+                      if (VID_HEADER.Type0 == 13 || VID_HEADER.Type0 == 29)
                       struct {
-                        UBYTE U1;
-                        UBYTE U2;
-                      } DATA01[Count];
-                      UBYTE Data02[Count]; 
-                      pos += 3*Count;
+                        for (z = 0; z < Count ;++z)
+                          UINT16 Z;
+                      } ZBUFFER_DATA; 
+                      struct { 
+                        for (z = 0; z < Count ;++z)
+                          UBYTE Data;
+                      } RAW_DATA;
+                      pos += Count;
                     }
-                    else
-                    {
-                      struct {
-                        UBYTE U1;
-                      } DATA01[Count]; 
-                      pos += Count;                     
-                    } 
-                  } 
-                  else
-                  {
-                    UBYTE U1;
-                    pos += 1;
-                    if (Size > 0)
-                    { 
-                      UBYTE U2;
-                      pos += 1;
-                      if (U2 > 0)
-                      {
-                        UBYTE U3;
-                        pos += 1;
-                      }
-                    }
-                  } 
-                } D;
-              }
-            } 
+
+                    UBYTE XOffset;
+                    UBYTE Count;
+
+                  } while (XOffset > 0);
+                };
+              } LINE;
+              line += 1;
+            }              
           } DATA;
-          //Printf("%d ", count0); 
         } 
         else
-          BYTE Data[Size - 4];    
+          UBYTE Data[Size0 - 4];    
       } IMAGE_DATA <name="Image data">;
 
       typedef struct (int arraySize) {
