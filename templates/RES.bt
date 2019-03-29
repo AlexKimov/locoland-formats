@@ -11,7 +11,8 @@
 //   History: 
 //------------------------------------------------
 
-local uint size;
+local uint size, i;
+local string str;
 
 typedef struct {
   FLOAT R;
@@ -132,33 +133,32 @@ struct {
 } CNST_HEADER;
 
 struct {
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
+  UINT MaxScrollSpeedX;
+  UINT MaxScrollSpeedY;
+  UINT Gravitation;
+  UINT Gravitation2;
+  UINT RepairSpeed;
+  UINT AmmoReloadTime;
+  UINT RailRepairSpeed;
+  UINT MasterRepairSpeed;
+  UINT Friction;
+  UINT DepoMillisecondsInSecond;
+  UINT DebugMode;
+  UINT DepoAutoRepairTimeInSeconds;
+  UINT MasterAutoRepairTimeInSeconds;
+  UINT MouseTipsTime;
+  UINT DepoAutoAddHpPerSecond;
+  UINT MasterAutoAddHpPerSecond;
+  UINT FortCannonsAutoAddHpPerSecond;
+  UINT RepairSettingMineTime;
+  UINT RepairDestroyingMineTime;
+  UINT DirijbanAmmoReloadTime;
+  UINT SelectUnitGamma;
+  UINT AttackUnitGamma;
+  UINT LightedUnitGamma;
+  UINT NukeForBirth;
+  UINT SafeClashSpeed;
+  UINT MessageStartDelay;
 } CNST_DATA;
 
 struct {
@@ -169,7 +169,28 @@ struct {
   UINT Count;
 } WEAP_HEADER;
 
-BYTE Data2[WEAP_HEADER.Size - 12];
+struct {
+  struct {
+    UINT Param1;
+    UINT Param2;
+    UINT Param3;
+    FLOAT Param4;
+    FLOAT Param5;
+    FLOAT Param6;
+    FLOAT Param7;
+    FLOAT Param8;
+    FLOAT Param9;
+    UINT Param10;
+    UINT Param11;
+    UINT Param12;
+    UINT Param13;
+    UINT Param14;
+    UINT Param15;
+    UINT Param16;
+    UINT Param17;
+    FLOAT Param18;
+  } WEAPON[WEAP_HEADER.Count];
+} WEAP_DATA;
 
 struct {
   char Name[4];
@@ -179,4 +200,14 @@ struct {
   UINT Count;
 } SFX_HEADER;
 
-BYTE Data3[SFX_HEADER.Size - 12];
+struct {
+  struct {
+    UINT Property;
+    BYTE Priority;
+    for (i = 0; i < 7; ++i)
+      struct {  
+        string Wave;
+      } FILENAME;     
+    BYTE ForceFeedBack;
+  } SFX[SFX_HEADER.Count] <optimize=false>;
+} SFX_DATA;
