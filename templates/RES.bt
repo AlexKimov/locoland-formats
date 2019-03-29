@@ -13,6 +13,43 @@
 
 local uint size;
 
+typedef struct {
+  FLOAT R;
+  FLOAT G;
+  FLOAT B;
+  FLOAT A;
+} VECTOR_4F;
+
+typedef struct {
+  FLOAT X;
+  FLOAT Y;
+  FLOAT Z;
+} VECTOR_3F;
+
+typedef struct {
+  FLOAT X;
+  FLOAT Y;
+} VECTOR_2F;
+
+typedef struct {
+  UINT V1;
+  UINT V2;
+  UINT V3;
+  UINT V4;
+  UINT V5;
+  UINT V6;
+  UINT V7;
+  UINT V7;
+  UINT V8;
+  UINT V9;
+  UINT V10;
+  UINT V11;
+  UINT V12;
+  UINT V13;
+  UINT V14;
+  UINT V15;
+} PARAMS;
+
 struct {
   char Magic[4];
   UINT Size <name="File size">;
@@ -26,18 +63,62 @@ struct {
   UINT Count;
 } DATAOBJ_HEADER;
 
+typedef struct {
+
+  UINT Size;
+  UINT NVid;
+  size = ReadStringLength(FTell());
+  string Name;
+  UINT SpriteType;
+  UINT SpriteClass;
+  UINT Property;
+  UINT MoveMask;
+  VECTOR_3F Scale <name="Size">;
+
+  UINT MaxHP;
+  FLOAT MaxSpeed;
+  UINT MaxZSpeed;
+  FLOAT Acceleration;
+
+  FLOAT RotationPeriod;
+  FLOAT NWeapon;
+  FLOAT DeathRange;
+  FLOAT DeathDamageMinMax;
+
+  UINT DeathPush;
+  VECTOR_3F LinkCoor <name="LinkCoor">;
+  UINT LinkVid;
+  UINT TopZ;
+
+  VECTOR_2F ForMoveUpDownZ <name="ForMoveUpDownZ">;
+  UINT LifeTime;
+  // UINT Reserved;
+  // UINT NoDir;
+
+  PARAMS NOFRAME <name="NOFRAME">;
+  PARAMS SFX <name="SFX">;
+  PARAMS FrameSpeed <name="FrameSpeed">;
+  PARAMS ChildX <name="ChildX">;
+  PARAMS ChildY <name="ChildY">;
+  PARAMS ChildZ <name="ChildZ">;
+  PARAMS ChildVid <name="ChildVid">;
+  PARAMS NoChild <name="NoChild">;
+
+ // VECTOR_4F GammaRGBA;
+
+  VECTOR_3F Scale <name="Scale">;
+
+  string VidName;
+
+} OBJECT <name=getObjectName>;
+
+string getObjectName(OBJECT &obj) 
+{
+  return obj.VidName;
+}
+
 struct {
-  struct {
-    UINT Size;
-    UINT Index;
-    size = ReadStringLength(FTell());
-    string Name;
-    BYTE UnknownData[608];
-    FLOAT X;
-    FLOAT Y;
-    FLOAT Z;
-    string FileName;
-  } U[DATAOBJ_HEADER.Count] <optimize=false>;
+  OBJECT Object[DATAOBJ_HEADER.Count] <optimize=false>;
 } DATAOBJ_DATA;
 
 BYTE A;
@@ -50,7 +131,35 @@ struct {
   UINT Count;
 } CNST_HEADER;
 
-BYTE Data1[CNST_HEADER.Size - 12];
+struct {
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+} CNST_DATA;
 
 struct {
   char Name[4];
