@@ -14,6 +14,106 @@
 local uint size, i;
 local string str;
 
+typedef enum <uint> {
+  U_Dummy = 1,
+  U_Terrain = 2,
+  U_Object = 4, 
+  U_Unit = 8, 
+  U_Monster = 8,
+  U_Avia = 16,
+  U_Menu = 32, 
+  U_RailWay = 64, 
+  U_Region = 128, 
+  U_Cannon = 512, 
+  U_Sprite = 1024
+} SPRITE_TYPE <name="Sprite type">;
+
+typedef enum <uint> { 
+  B_Terrain = 0,
+  B_Object = 1, 
+  B_Unit = 2, 
+  B_Monster = 2,
+  B_Building = 3, 
+  B_Plane = 4, 
+  B_Cannon = 5, 
+  B_Primitive = 6, 
+  B_Man = 7, 
+  B_BuildedTerrain = 8, 
+  B_Sprite = 9, 
+  B_Frame = 10,
+  B_Linker = 12, 
+  B_Text = 19,
+  B_CivRobot = 20,
+  B_Engine = 21, 
+  B_Rail = 22,
+  B_Region = 23,
+  B_Depo = 24, 
+  B_Creature = 25, 
+  B_Balloon = 26, 
+  B_BigMissile = 27 
+} SPRITE_CLASS <name="Sprite class">;
+
+typedef enum <uint> { 
+  P_RandBirth = 1, 
+  P_Gravity = 2, 
+  P_Gravity2 = 4, 
+  P_BuildSizeToGridZ = 8, 
+  P_Track = 16, 
+  P_BuildVidZToGridZ = 32, 
+  P_Hash = 64, 
+  P_Map = 64,
+  P_BirthAsSmoke = 128,                                       
+  P_RotateSizeXYZ = 256, 
+  P_ZeroZ = 512,                                       
+  P_RandSpeed = 1024, 
+  P_Gamma = 2048, 
+  P_Shadow = 0x1000, 
+  P_Wind = 0x1000,                                       
+  P_SkipMapEd = 0x2000, 
+  P_DirToRandom = 0x2000, 
+  P_Crush = 0x4000, 
+  P_FontWithBackGround = 0x4000, 
+  P_AlwaysTop  = 0x8000,
+  P_Wave = 0x10000, 
+  P_InvisibleForEnemy = 0x20000, 
+  P_CreateChildEnd = 0x40000, 
+  P_VertDir = 0x80000, 
+  P_Noise = 0x100000, 
+  P_Blur = 0x200000, 
+  P_RandZSpeed = 0x400000, 
+  P_CreateChildWithScale = 0x800000, 
+  P_OnePhase = 0x1000000, 
+  P_NotChangeLinkerCoor = 0x2000000, 
+  P_RadialDamage = 0x4000000, 
+  P_SelfMoving = 0x8000000, 
+  P_Bounce = 0x10000000, 
+  P_HardwareDirect = 0x20000000,
+  P_Ground = 0x40000000, 
+  P_MappedBuild = 0x40000000, 
+  P_NotDamageForFriend = 0x80000000 
+} PROPERTY <name="Property">;
+
+typedef enum <uint> {
+  P_AnyDirFire = 1,
+  P_FrontEye = 2,
+  P_FrontEnemyPriority = 4,
+  P_RandomTarget = 8,
+  P_InTurn = 16,
+  P_SelfDirecting = 32,
+  P_Moved = 64, 
+  P_AttackAnyArmy = 128, 
+  P_Thrower = 256, 
+  P_Pusher = 512, 
+  P_NotBreakAnimation = 0x400, 
+  P_HomoRotate = 0x800, 
+  P_MoveWithAnyDirection = 0x1000, 
+  P_HaveHeadToFlagman = 0x2000, 
+  P_HpToDirection = 0x4000, 
+  P_NotStopInAttack = 0x8000, 
+  P_ImmediateFireToDirection = 0x10000, 
+  P_Crusher = 0x20000, 
+} WEAPON_PROPERTY <name="Property">;
+
 typedef struct {
   FLOAT R;
   FLOAT G;
@@ -70,9 +170,9 @@ typedef struct {
   UINT NVid;
   size = ReadStringLength(FTell());
   string Name;
-  UINT SpriteType;
-  UINT SpriteClass;
-  UINT Property;
+  SPRITE_TYPE SpriteType;
+  SPRITE_CLASS SpriteClass;
+  PROPERTY Property;
   UINT MoveMask;
   VECTOR_3F Scale <name="Size">;
 
@@ -133,6 +233,7 @@ struct {
 } CNST_HEADER;
 
 struct {
+  UINT Unknown;
   UINT MaxScrollSpeedX;
   UINT MaxScrollSpeedY;
   UINT Gravitation;
@@ -171,24 +272,24 @@ struct {
 
 struct {
   struct {
-    UINT Param1;
-    UINT Param2;
-    UINT Param3;
-    FLOAT Param4;
-    FLOAT Param5;
-    FLOAT Param6;
-    FLOAT Param7;
-    FLOAT Param8;
-    FLOAT Param9;
-    UINT Param10;
-    UINT Param11;
-    UINT Param12;
-    UINT Param13;
-    UINT Param14;
-    UINT Param15;
-    UINT Param16;
-    UINT Param17;
-    FLOAT Param18;
+    SPRITE_TYPE SpriteType;
+    WEAPON_PROPERTY Property;
+    WEAPON_PROPERTY U;
+    FLOAT Length;
+    FLOAT Weight;
+    FLOAT Power;
+    FLOAT BattleRange;
+    FLOAT AimRadius;
+    FLOAT U;
+    UINT ReloadTime;
+    UINT BuildTime;
+    UINT U;
+    UINT DefaultArmy;
+    UINT DefaultBehave;
+    UINT U;
+    UINT U;
+    UINT EnemyRating;
+    FLOAT U;
   } WEAPON[WEAP_HEADER.Count];
 } WEAP_DATA;
 
