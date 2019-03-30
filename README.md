@@ -5,7 +5,7 @@
 | № | Формат | Прогресс  | Шаблон |  Описание   |
 | :-- | :------- | :-- | :-- | :-- |
 |  **1**  |  .vid  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1) | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt)  | Архив текстур |
-|  **2**  |  .res  |  | [RES.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/RES.bt)  |  |
+|  **2**  |  .res  |  | [RES.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/RES.bt)  | Свойства, параметры объектов  |
 
 ### Скрипты
 
@@ -23,6 +23,7 @@
 | № | Format | Status  | Template |  Description   |
 | :-- | :------- | :-- | :-- | :-- |
 |  **1**  |  .VID  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1)   | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt) | Texture archive |
+|  **2**  |  .res  |  | [RES.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/RES.bt)  | Object parameters  |
 
 ### Scripts
 
