@@ -24,6 +24,7 @@ class LLSpriteArchive:
         self.width = 0
         self.height = 0
         self.type0 = 0
+        self.spritesType = 0 # 1 - surfaces, 2 - game objects, 3 - menu
         self.spriteCount = 0
         self.paletteSize = 0
         self.palette = []         
@@ -65,10 +66,17 @@ class LLSpriteArchive:
               
         if type == 0: # image                   
             formats = ["b4g4r4a4", "r5g6b5"] 
-            if self.spriteCount == 1: 
+            if self.type0 == 33 or self.type0 == 49: 
                 format = formats[1]
             else:
-                format = formats[0]            
+                format = formats[0]
+
+            if self.spritesType == 1:
+                if self.spriteCount > 1:
+                    format = formats[0]                
+                else:
+                    format = formats[1]
+                
             rgbData = rapi.imageDecodeRaw(imageData, width, height, format)
         else: # mask
             rgbData = rapi.imageDecodeRaw(imageData, width, height, "r12b4")          
@@ -89,33 +97,84 @@ class LLSpriteArchive:
         filereader.seek(20, NOESEEK_REL) 
         
         count = filereader.readShort()   
-        
+        if count > 0:
+            self.spritesType = 1
         #start = timer() 
+        
+        spriteNumber = 0
         
         while True:
             width = filereader.readShort()  
             height = filereader.readShort()
             
-            imageData = self.getRGBData(filereader, width, height,  0)
-            
+            imageData = self.getRGBData(filereader, width, height,  0)            
             self.sprites.append(imageSprite(width, height, imageData))
             
             # sprite mask
             if self.spriteCount == 1 and count > 1:
-                imageData = self.getRGBData(filereader, width, height, 1)
-                self.sprites.append(imageSprite(width, height, imageData))
+                size = filereader.readUInt()
+                filereader.seek(size, NOESEEK_REL) #skip sprite z-depth
+                #imageData = self.getRGBData(filereader, width, height, 1)
+                #self.sprites.append(imageSprite(width, height, imageData))
+                spriteNumber += 1
                 
-            if len(self.sprites) == count:
+            spriteNumber += 1
+            
+            if spriteNumber == count:
                 break  
                 
         #noesis.logPopup()                
         #end = timer()       
         #print(end - start) 
+    
+    def unpackSpriteData2(self, filereader, width, height, dataSize):        
+        spriteData = bytearray()
+        emptyline = bytearray([0] * width * 2)
+
+        line = 0
+        linepos = 0
+ 
+        filereader.seek(2, NOESEEK_REL)
+        yoffset = filereader.readShort()
         
+        if yoffset > 0:
+            spriteData += emptyline * yoffset
+           
+        lineCount = filereader.readShort()
+        #noesis.logPopup() 
+        #
+        while line < lineCount:
+            xoffset = filereader.readUByte() # offset to where image line data begins
+            count = filereader.readUByte() # number of pixels to copy   
+                       
+            if xoffset > 0:           
+                linepos += xoffset
+                spriteData += bytearray(emptyline[0: (xoffset) * 2])                
+            
+            if count > 0:                
+                rawdata = filereader.readBytes(count*2)
+                spriteData += rawdata
+                linepos += count
+            
+            #if             
+                
+            if xoffset == 0 and count == 0:           
+                if linepos == 0:
+                    spriteData += emptyline
+                if linepos < width:
+                    spriteData += bytearray(emptyline[0: (width - linepos) * 2])   
+                line += 1
+                linepos = 0                    
+
+        format = "b5g6r5"
+        unpackedImageData = rapi.imageDecodeRaw(spriteData, width, height, format) 
+        
+        self.sprites.append(imageSprite(width, height, unpackedImageData))        
+           
     def unpackSpriteData(self, filereader, width, height, dataSize): 
         spriteData = bytearray(width*height*4)
     
-        if dataSize == 6:
+        if dataSize == 2:
             filereader.seek(2, NOESEEK_REL)
         else:           
             # some data
@@ -161,24 +220,30 @@ class LLSpriteArchive:
                     xoffset = filereader.readUByte()# if xoffset = 0 - end of line
                     count = filereader.readUByte()
                             
-        self.sprites.append(imageSprite(width, height, spriteData))
+            self.sprites.append(imageSprite(width, height, spriteData))
         
     def readDATASection(self, filereader):
+        if self.spritesType == 1:
+            return None
+        
         filereader.seek(12, NOESEEK_REL)
         
         count = filereader.readUInt() 
-        for i in range(count):
+        for i in range(count):                
             dataSize = filereader.readUInt()        
-            
-            if self.type0 == 33:
-                width = filereader.readUShort()
-                height = filereader.readUShort()
-                                
-                self.unpackSpriteData(filereader, width, height, dataSize)
-            else:
-                filereader.seek(4, NOESEEK_REL)
-                self.unpackSpriteData(filereader, self.width, self.height, \
-                    dataSize)
+              
+            if len(self.palette) > 0:
+                dataSize = filereader.readUInt()
+                self.unpackSpriteData(filereader, self.width, self.height, dataSize)
+            else:          
+                if self.spriteCount == 1:
+                    dataSize = filereader.readUInt()  
+                    self.unpackSpriteData2(filereader, self.width, self.height, \
+                        dataSize)
+                else:
+                    return None               
+            #else:
+                #return None                
                          
     def readPALSection(self, filereader):    
         filereader.seek(16, NOESEEK_REL)
@@ -201,7 +266,8 @@ class LLSpriteArchive:
             if id == 1179800915: # SURF           
                 self.readSURFSection(self.reader)
             elif id == 1096040772:  # DATA               
-                self.readDATASection(self.reader)
+                if self.readDATASection(self.reader) == None:
+                    break                
             elif id == 541868368: # PAL
                 self.readPALSection(self.reader)
             else:
