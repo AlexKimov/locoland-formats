@@ -127,9 +127,10 @@ while (!FEof())
 
       typedef struct {
         UINT Size0;
-        UINT Size1;   
+        if ((VID_HEADER.SpriteCount == 1) || (exists(PAL_HEADER)))
+          UINT Size01;   
 
-        if (Size1 == 2)
+        if (Size0 == 6)
           UINT16 Empty;
         else
         if (exists(PAL_HEADER))
@@ -185,7 +186,57 @@ while (!FEof())
           } DATA;
         } 
         else
-          UBYTE Data[Size0 - 4];    
+        {  
+          if (VID_HEADER.SpriteCount > 1)
+          {
+            struct { 
+              //FSkip(-4);
+              struct {             
+                UINT16 Unknown;
+                UINT16 Unknown;
+                UINT Unknown;
+                UINT Unknown;
+                UINT Unknown;
+                UINT Unknown;
+                UINT Unknown;
+                UINT Unknown;
+                UINT Unknown;
+                UINT Unknown;
+              } SPRITE_PARAMS[VID_HEADER.SpriteCount];
+            } DATA;
+          }
+          else
+          {
+            line = 0;
+            pos = 0;
+            UINT16 Unknown;
+            UINT16 YOffset;
+            UINT16 LineCount;
+            struct {  
+              while (line < LineCount)
+              {
+                UBYTE Offset;
+                UBYTE Count;
+                pos += 2;
+
+                if (Count > 0)
+                { 
+                  struct {
+                    BYTE Data[Count*2];
+                  } RawData;
+                  pos += Count*2;
+                };
+ 
+                if (Offset == 0 && Count == 0)
+                {
+                    line += 1;
+                };                   
+              };
+            } DATA;
+
+          } 
+        };
+             
       } IMAGE_DATA <name="Image data">;
 
       typedef struct (int arraySize) {
