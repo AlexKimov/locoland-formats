@@ -4,7 +4,7 @@
 ### Шаблоны
 | № | Формат | Прогресс  | Шаблон |  Описание   |
 | :-- | :------- | :-- | :-- | :-- |
-|  **1**  |  .map  |  | [MAP.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/ЬФЗ.bt)  | Уровень |
+|  **1**  |  .map  |  | [MAP.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/MAP.bt)  | Уровень |
 |  **2**  |  .res  |  | [RES.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/RES.bt)  | Свойства, параметры объектов  |
 |  **3**  |  .vid  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1) | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt)  | Спрайты |
 
@@ -23,7 +23,7 @@
 ### Templates
 | № | Format | Status  | Template |  Description   |
 | :-- | :------- | :-- | :-- | :-- |
-|  **1**  |  .map  |  | [MAP.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/ЬФЗ.bt)  | Level |
+|  **1**  |  .map  |  | [MAP.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/MAP.bt)  | Level |
 |  **2**  |  .res  |  | [RES.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/RES.bt)  | Object parameters  |
 |  **3**  |  .VID  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1)   | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt) | Sprites |
 
