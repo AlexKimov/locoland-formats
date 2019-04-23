@@ -6,12 +6,12 @@
 | :-- | :------- | :-- | :-- | :-- |
 |  **1**  |  .map  |  | [MAP.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/ЬФЗ.bt)  | Уровень |
 |  **2**  |  .res  |  | [RES.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/RES.bt)  | Свойства, параметры объектов  |
-|  **3**  |  .vid  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1) | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt)  | Архив текстур |
+|  **3**  |  .vid  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1) | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt)  | Спрайты |
 
 ### Скрипты
 
 #### 010editor
-* [VIDtoBMP.1sc](https://github.com/AlexKimov/locoland-formats/blob/master/scripts/VIDtoBMP.1sc) - конвертирование/распаковка **.vid** на отдельные **.bmp** файлы.
+* [VIDtoBMP.1sc](https://github.com/AlexKimov/locoland-formats/blob/master/scripts/VIDtoBMP.1sc) - конвертирование/распаковка **.vid** на отдельные **.bmp** файлы (в работе).
 #### noesis
 * [fmt_sl_vid.py](https://github.com/AlexKimov/locoland-formats/blob/master/scripts/fmt_sl_vid.py) - просмотр **.vid**
 
@@ -23,13 +23,13 @@
 ### Templates
 | № | Format | Status  | Template |  Description   |
 | :-- | :------- | :-- | :-- | :-- |
-|  **1**  |  .map  |  | [MAP.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/ЬФЗ.bt)  | Уровень |
+|  **1**  |  .map  |  | [MAP.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/ЬФЗ.bt)  | Level |
 |  **2**  |  .res  |  | [RES.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/RES.bt)  | Object parameters  |
-|  **3**  |  .VID  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1)   | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt) | Texture archive |
+|  **3**  |  .VID  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1)   | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt) | Sprites |
 
 ### Scripts
 
 #### 010editor
-* [VIDtoBMP.1sc](https://github.com/AlexKimov/locoland-formats/blob/master/scripts/VIDtoBMP.1sc) - unpack **.vid** to **.bmp**s.
+* [VIDtoBMP.1sc](https://github.com/AlexKimov/locoland-formats/blob/master/scripts/VIDtoBMP.1sc) - unpack **.vid** to **.bmp**s (wip).
 #### noesis
 * [fmt_sl_vid.py](https://github.com/AlexKimov/locoland-formats/blob/master/scripts/fmt_sl_vid.py) - view **.vid**s
