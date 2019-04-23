@@ -11,13 +11,29 @@
 //   History: 
 //------------------------------------------------
 
+local float count;
+
 typedef enum <char> {
   RES,
   SPR,
   SPRD,
   GROU,
-  PLAY
+  PLAY,
+  GRPH,
+  GRID,
+  HEAD
 } IDENTIFIER;
+
+typedef struct {
+  FLOAT X;
+  FLOAT Y;
+  FLOAT Z;
+} VECTOR_3F;
+
+typedef struct {
+  FLOAT X;
+  FLOAT Y;
+} VECTOR_2F;
 
 struct {
   char Magic[4];
@@ -26,24 +42,175 @@ struct {
 
 struct {
   char Name[8];
+  UINT Size1;
+  FLOAT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Size2;
+  UINT16 Unknown;
+  UINT16 Unknown;
+  string Name0;
+
+  struct {
+    UINT A;
+    UINT A;
+    UINT A;
+    UINT A;
+    UINT A;
+    UINT A;
+    UINT A;
+    UINT A;
+    UINT A;
+    UINT A;
+    UINT A;
+    UINT A;
+    UINT A;
+    BYTE D1[472];
+    BYTE D2[84];
+  } Y;
+
+
+  VECTOR_3F Scale <name="Scale">;
+  string Name1;
+  string Name2;
+
+  count = (Size1 - 685)/16; 
+
+  struct {
+    IDENTIFIER ID[4];
+    UINT B;
+    FLOAT D;
+    UINT B;
+  } GRPH[count];
+
+  UINT Unknown;
+
+  struct {
+    UINT Size;
+    UINT Unknown;
+    UINT Unknown;
+    UINT Unknown;
+    UINT Unknown;
+    FLOAT Unknown;
+  } K;
+} MAP_OBJ;
+
+struct {
+  IDENTIFIER ID[4];
   UINT Size;
-  UINT Unknown;
+  FLOAT Unknown;
   UINT Unknown;
   UINT Unknown;
   UINT Size;
-  UINT16 Unknown;
-  UINT16 Unknown;
-  UINT16 Count;
-  UINT16 Width;
-  UINT16 Height;
+  VECTOR_2F MapSize <name="Map Size">;
+  FLOAT Unknown;
+  FLOAT Unknown;
   UINT Unknown;
   UINT Unknown;
+} HEAD;
+
+struct {
+  IDENTIFIER ID[4];
+  UINT B;
+  FLOAT B;
+  UINT B;
+  UINT B;
+  UINT Size;
+  UINT16 Data[Size/2];
+} GRID;
+
+struct {
+  IDENTIFIER ID[4];
+  UINT B;
+  FLOAT B;
+  UINT B;
+  UINT B;
+  UINT Size;
+
+  count = Size/28.0; 
+
+  struct {
+    UINT Unknown;  
+    UINT Index; // object index in objects.res
+    VECTOR_2F Position <name="Position">;
+    FLOAT zIndex; // sprite z-index
+    UINT FrameNumber; // number of frame / direction 
+    UINT Unknown; // 0   
+  } SPRITE[count]; 
+
+  INT Unknown;
+} SPR; // static sprites: background, buildings and so on
+
+struct {
+  IDENTIFIER ID[4];
+  UINT Size;
+  FLOAT Unknown;
   UINT Unknown;
-  UINT Unknown;
-  UINT Unknown;
-  UINT Unknown;
-  UINT Unknown;
-  UINT Unknown;
-  UINT Unknown;
-  UINT16 Unknown;
-} MAP_HEADER;
+  UINT Count;
+
+  struct {
+    UINT A;
+    UINT16 A;  
+    UINT16 A;  
+    UINT A;   
+  } SPRITE[187]; 
+
+  UINT A;
+  UINT A;
+
+  struct {
+    UINT A;
+    UINT A;
+    UINT A; 
+  } SPRITE2; 
+  UINT A;
+  UINT A;
+  struct {
+    UINT A;
+    UINT A;
+    UINT A; 
+  } SPRITE3; 
+
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+  UINT A;
+} SPRD;
+
+struct {
+  IDENTIFIER ID[4];
+  UINT Size;
+  FLOAT Unknown;
+  UINT B;
+  UINT B;
+  UINT B;
+  UINT B;
+  UINT B;
+  UINT B;
+  UINT B;
+} PLAY;
+
+struct {
+  IDENTIFIER ID[4];
+  UINT Size;
+  FLOAT Unknown;
+  UINT B;
+  UINT B;
+  UINT B;
+  INT B; 
+} GROU;
+
