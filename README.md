@@ -2,16 +2,17 @@
 Форматы игры **Дорога на Хон-Ка-Ду** (2003), **Alien Shooter** (2003). Здесь [шаблоны 010 Editor](https://github.com/AlexKimov/locoland-formats/tree/master/templates). Здесь [скрипты 010 Editor](https://github.com/AlexKimov/locoland-formats/tree/master/scripts) для работы с форматами.
 
 #### Текущие планы:
-1. Разбор формата карт (.map) **Alien Shooter 1**.
+1. Доработка шаблона формата .map **Alien Shooter 1**.
 2. Доработка шаблона формата .map для **ХКД**.
 
 ### Шаблоны
 | № | Формат | Прогресс  | Шаблон |  Описание   |
 | :-- | :------- | :-- | :-- | :-- |
 |  **1**  |  .map  |  | [MAP.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/MAP.bt)  | Уровень (ХКД) |
-|  **2**  |  .meh  |  | [MEH.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/MEH.bt)  |  |
-|  **3**  |  .res  |  | [RES.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/RES.bt)  | Свойства, параметры объектов  |
-|  **4**  |  .vid  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1) | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt)  | Спрайты |
+|  **2**  |  .map  |  | [MAP(AS).bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/MAP(AS).bt)  | Уровень (AS) |
+|  **3**  |  .meh  |  | [MEH.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/MEH.bt)  |  |
+|  **4**  |  .res  |  | [RES.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/RES.bt)  | Свойства, параметры объектов  |
+|  **5**  |  .vid  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1) | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt)  | Спрайты |
 
 ### Скрипты
 
@@ -29,9 +30,10 @@
 | № | Format | Status  | Template |  Description   |
 | :-- | :------- | :-- | :-- | :-- |
 |  **1**  |  .map  |  | [MAP.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/MAP.bt)  | Level |
-|  **2**  |  .meh  |  | [MEH.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/MEH.bt)  |  |
-|  **3**  |  .res  |  | [RES.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/RES.bt)  | Object parameters  |
-|  **4**  |  .VID  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1)   | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt) | Sprites |
+|  **2**  |  .map  |  | [MAP(AS).bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/MAP(AS).bt)  | Уровень (AS) |
+|  **3**  |  .meh  |  | [MEH.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/MEH.bt)  |  |
+|  **4**  |  .res  |  | [RES.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/RES.bt)  | Object parameters  |
+|  **5**  |  .VID  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1)   | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt) | Sprites |
 
 ### Scripts
 
