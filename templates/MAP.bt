@@ -149,68 +149,100 @@ struct {
   UINT Count;
 
   struct {
-    UINT A;
-    UINT16 A;  
-    UINT16 A;  
-    UINT A;   
-  } SPRITE[187]; 
-
-  UINT A;
-  UINT A;
-
-  struct {
-    UINT A;
-    UINT A;
-    UINT A; 
-  } SPRITE2; 
-  UINT A;
-  UINT A;
-  struct {
-    UINT A;
-    UINT A;
-    UINT A; 
-  } SPRITE3; 
-
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
-  UINT A;
+    UINT Size;
+    if (Size == 4)
+        INT Unknown;
+    else
+    if (Size == 88) 
+    {
+      UINT Unknown; 
+      UINT Unknown; 
+      UINT Unknown; 
+      UINT Unknown; 
+      UINT Unknown; 
+      UINT Unknown; 
+      FLOAT Width; 
+      FLOAT Heigh; 
+      INT Unknown; 
+      INT Unknown; 
+      INT Unknown; 
+      INT Unknown; 
+      INT Unknown; 
+      INT Unknown; 
+      INT Unknown; 
+      INT Unknown; 
+      INT Unknown; 
+      INT Unknown; 
+      INT Unknown; 
+      INT Unknown; 
+      INT Unknown; 
+      INT Unknown; 
+    }   
+    else
+    {
+      UINT16 Unknown; 
+      UINT16 Unknown;    
+      UINT A;
+      if (Size > 8) 
+      {
+        UINT Type;   
+        UINT Count;
+        if (Type == 1)
+        {
+          if (Size != 16)
+          {
+            if (Count > 0)
+            {
+              UINT Unknown;
+              UINT Unknown;
+            } 
+            if (Count == 0) 
+            struct {
+              UINT Unknown;
+              UINT Unknown;
+              UINT Unknown;
+              UINT Unknown;
+            } DATA[2];
+            else
+              struct {
+                UINT Unknown;
+                UINT Unknown;
+                UINT Unknown;
+                UINT Unknown;
+              } DATA[Count];
+          UINT Unknown;
+          UINT Unknown; 
+          };
+        } 
+        else
+        {
+          BYTE Data[Size - 16];
+        }     
+      };     
+    };
+  } SPRITE[Count] <optimize=false>; 
 } SPRD;
 
 struct {
   IDENTIFIER ID[4];
   UINT Size;
   FLOAT Unknown;
-  UINT B;
-  UINT B;
-  UINT B;
-  UINT B;
-  UINT B;
-  UINT B;
-  UINT B;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  INT Unknown;
 } PLAY;
 
 struct {
   IDENTIFIER ID[4];
   UINT Size;
   FLOAT Unknown;
-  UINT B;
-  UINT B;
-  UINT B;
-  INT B; 
+  UINT Unknown;
+  UINT Unknown;
+  UINT Size;
+  INT Unknown; 
 } GROU;
 
