@@ -1,5 +1,5 @@
 # Описание
-Форматы игры **Дорога на Хон-Ка-Ду** (2003). Здесь [шаблоны 010 Editor](https://github.com/AlexKimov/locoland-formats/tree/master/templates). Здесь [скрипты 010 Editor](https://github.com/AlexKimov/locoland-formats/tree/master/scripts) для работы с форматами.
+Форматы игры **Дорога на Хон-Ка-Ду** (2003), **Alien Shooter** (2003). Здесь [шаблоны 010 Editor](https://github.com/AlexKimov/locoland-formats/tree/master/templates). Здесь [скрипты 010 Editor](https://github.com/AlexKimov/locoland-formats/tree/master/scripts) для работы с форматами.
 
 ### Шаблоны
 | № | Формат | Прогресс  | Шаблон |  Описание   |
@@ -18,7 +18,7 @@
 ***
 # About
 
-**Steamland/Locoland game** (2003) file formats. 010 Editor [templates](https://github.com/AlexKimov/locoland-formats/tree/master/templates) and [scripts](https://github.com/AlexKimov/locoland-formats/tree/master/scripts).
+**Steamland/Locoland game** (2003), **Alien Shooter** (2003) file formats. 010 Editor [templates](https://github.com/AlexKimov/locoland-formats/tree/master/templates) and [scripts](https://github.com/AlexKimov/locoland-formats/tree/master/scripts).
 
 ### Templates
 | № | Format | Status  | Template |  Description   |
