@@ -41,8 +41,9 @@ class LLSpriteArchive:
         head = self.reader.readUInt()
         if vid != 541346134 and head != 1145128264: # "VID HEAD"
             return 0   
-                      
-        self.reader.seek(20, NOESEEK_REL)
+
+        size = self.reader.readUInt()                      
+        self.reader.seek(16, NOESEEK_REL)
         self.type0 = self.reader.readShort() 
         
         self.reader.seek(2, NOESEEK_REL) 
@@ -51,6 +52,9 @@ class LLSpriteArchive:
         self.width = self.reader.readShort()  
         self.height = self.reader.readShort()  
         
+        # alien shooter
+        if size == 38:
+            self.reader.seek(12, NOESEEK_REL)            
         return 1
      
     def palettedToRGBA32(self, indexes):
