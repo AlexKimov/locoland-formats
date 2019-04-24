@@ -1,0 +1,128 @@
+//------------------------------------------------
+//--- 010 Editor v8.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+local float count;
+
+typedef enum <char> {
+  RES,
+  SPR,
+  SPRD,
+  GROU,
+  PLAY,
+  GRPH,
+  GRID,
+  HEAD
+} IDENTIFIER;
+
+typedef struct {
+  FLOAT X;
+  FLOAT Y;
+} VECTOR_2F;
+
+struct {
+  char Magic[4];
+  UINT Size <name="File size">;
+} FILE_HEADER;
+
+struct {
+  char Name[8];
+  UINT Size1;
+  FLOAT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Size2;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  FLOAT Unknown;
+} MAP_GRPH;
+
+struct {
+  IDENTIFIER ID[4];
+  UINT Size;
+  FLOAT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Size;
+  VECTOR_2F MapSize <name="Map Size">;
+  FLOAT Unknown;
+  FLOAT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+} HEAD;
+
+struct {
+  IDENTIFIER ID[4];
+  UINT Size;
+  FLOAT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Size;
+
+  count = Size/28.0;
+
+  struct {
+    UINT Unknown;  
+    UINT Index; // object index in objects.res
+    VECTOR_2F Position <name="Position">;
+    FLOAT zIndex; // sprite z-index
+    UINT FrameNumber; // number of frame / direction 
+    UINT Unknown; // 0   
+  } SPRITE[count]; 
+
+  INT Unknown;
+} SPR; // static sprites: background, buildings and so on
+
+struct {
+  IDENTIFIER ID[4];
+  UINT Size;
+  FLOAT Unknown;
+  UINT Unknown;
+  UINT Count;
+
+  struct {
+    UINT Size;
+    INT Unknown; 
+    if (Size > 4)
+    {
+      UINT Unknown; 
+      UINT Unknown;  
+      BYTE Data[Size - 12]; 
+    };    
+  } SPRITE[Count] <optimize=false>; 
+} SPRD;
+
+struct {
+  IDENTIFIER ID[4];
+  UINT Size;
+  FLOAT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  INT Unknown;
+} PLAY;
+
+struct {
+  IDENTIFIER ID[4];
+  UINT Size;
+  FLOAT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Size;
+  INT Unknown; 
+} GROU;
+
