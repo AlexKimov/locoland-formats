@@ -1,0 +1,81 @@
+//------------------------------------------------
+//--- 010 Editor v8.0.1 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+typedef struct {
+  FLOAT X;
+  FLOAT Y;
+} VECTOR_2F;
+
+typedef enum <char> {
+  RES,
+  SPR,
+  SPRD,
+  GROU,
+  PLAY,
+  GRPH,
+  GRID,
+  HEAD
+} IDENTIFIER;
+
+struct {
+  char Magic[4];
+  UINT Size <name="File size">;
+} FILE_HEADER;
+
+struct {
+  char Name[8];
+  UINT Size1;
+  FLOAT Unknown;
+  UINT Unknown;
+  UINT Unknown;
+  UINT Size2;
+  UINT Unknown;
+  UINT Width;
+  UINT Height;
+  INT Unknown;
+  INT Unknown;
+} MENU;
+
+struct {
+  IDENTIFIER ID[4];
+  UINT Unknown;
+  FLOAT Unknown;
+  UINT Unknown;
+  UINT Count;
+
+  struct {
+    UINT Size;   
+    if (Size == 4)
+    {
+      INT Unknown; // -1         
+    }
+    else
+    {   
+      UINT Unknown; 
+      UINT Index; // object index in objects.res
+      VECTOR_2F Position <name="Position">;
+      FLOAT zIndex; // sprite z-index
+      UINT FrameNumber; // number of frame / direction 
+      UINT Unknown; // 0   
+      UINT Unknown; // 0 
+      UINT Unknown; // 0     
+      if (Size > 36)
+      {
+        UINT Size;        
+        string Name;
+      };
+    };    
+  } SPRITE[Count] <optimize=false>; 
+} SPR; // static sprites: background, buildings and so on
+
+
