@@ -27,7 +27,7 @@ struct {
 
 struct {
   char Name[8];
-  UINT Size;
+  UINT Size0;
   UINT Unknown;
   UINT Unknown;
   UINT Unknown;
@@ -37,6 +37,12 @@ struct {
   UINT16 SpriteCount; // 1 - texture atlas, >1 multiple sprites
   UINT16 Width;
   UINT16 Height;
+  if (Size0 == 38)
+  {
+    UINT Unknown;
+    UINT Unknown;
+    UINT Unknown; 
+  };   
 } VID_HEADER;
 
 typedef struct {
