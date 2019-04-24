@@ -4,9 +4,10 @@
 ### Шаблоны
 | № | Формат | Прогресс  | Шаблон |  Описание   |
 | :-- | :------- | :-- | :-- | :-- |
-|  **1**  |  .map  |  | [MAP.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/MAP.bt)  | Уровень |
-|  **2**  |  .res  |  | [RES.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/RES.bt)  | Свойства, параметры объектов  |
-|  **3**  |  .vid  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1) | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt)  | Спрайты |
+|  **1**  |  .map  |  | [MAP.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/MAP.bt)  | Уровень (ХКД) |
+|  **2**  |  .meh  |  | [MEH.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/MEH.bt)  |  |
+|  **3**  |  .res  |  | [RES.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/RES.bt)  | Свойства, параметры объектов  |
+|  **4**  |  .vid  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1) | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt)  | Спрайты |
 
 ### Скрипты
 
@@ -24,8 +25,9 @@
 | № | Format | Status  | Template |  Description   |
 | :-- | :------- | :-- | :-- | :-- |
 |  **1**  |  .map  |  | [MAP.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/MAP.bt)  | Level |
-|  **2**  |  .res  |  | [RES.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/RES.bt)  | Object parameters  |
-|  **3**  |  .VID  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1)   | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt) | Sprites |
+|  **2**  |  .meh  |  | [MEH.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/MEH.bt)  |  |
+|  **3**  |  .res  |  | [RES.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/RES.bt)  | Object parameters  |
+|  **4**  |  .VID  |  [VID](https://github.com/AlexKimov/locoland-formats/issues/1)   | [VID.bt](https://github.com/AlexKimov/locoland-formats/blob/master/templates/VID.bt) | Sprites |
 
 ### Scripts
 
