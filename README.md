@@ -1,6 +1,10 @@
 # Описание
 Форматы игры **Дорога на Хон-Ка-Ду** (2003), **Alien Shooter** (2003). Здесь [шаблоны 010 Editor](https://github.com/AlexKimov/locoland-formats/tree/master/templates). Здесь [скрипты 010 Editor](https://github.com/AlexKimov/locoland-formats/tree/master/scripts) для работы с форматами.
 
+#### Текущие планы:
+1. Разбор формата карт (.map) **Alien Shooter 1**.
+2. Доработка шаблона формата .map для **ХКД**.
+
 ### Шаблоны
 | № | Формат | Прогресс  | Шаблон |  Описание   |
 | :-- | :------- | :-- | :-- | :-- |
