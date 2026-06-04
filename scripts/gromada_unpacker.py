@@ -1,314 +1,447 @@
 import struct
 import os
 import sys
-import re
+import argparse
+import shutil
+from typing import Optional
 from PIL import Image
 
 SECTION_HEADER_SIZE = 11
-NAME_SIZE = 34
-METADATA_SIZE = 229
+NAME_FIELD_SIZE = 34
+METADATA_FIELD_SIZE = 229
 PIXEL_HEADER_SIZE = 13
 PALETTE_SIZE = 768
 
-BOUNDING_BOX_FORMATS = {2, 7, 8}
-SKIPPED_FORMATS = {3, 4}
+VID_SECTION_TYPE = 0x21
+FORMAT_0_RAW = 0
+FORMAT_2_RLE = 2
+FORMAT_6_RGB = 6
+FORMAT_8_ALPHA = 8
+DIRECT_FRAME_SHARE_INDEX = -1
+
+SUPPORTED_FORMATS = {0, 2, 6, 7, 8, 64, 70}
 
 
-def sanitize_filename(name_bytes: bytes) -> str:
-    raw_name = name_bytes.split(b'\x00')[0]
-    if not raw_name:
-        return "unnamed"
-    try:
-        name = raw_name.decode('ascii')
-    except UnicodeDecodeError:
-        try:
-            name = raw_name.decode('cp866')
-        except UnicodeDecodeError:
-            return "unnamed"
-    name = name.strip()
-    return re.sub(r'[\\/*?:"<>|]', "_", name) if name else "unnamed"
-
-
-def decode_mode0(raw_data: bytes, width: int, height: int):
-    pixels = bytearray(width * height)
-    alpha = bytearray(width * height)
-    copy_len = min(len(raw_data), width * height)
-    pixels[:copy_len] = raw_data[:copy_len]
-    for idx in range(copy_len):
-        alpha[idx] = 255
-    return pixels, alpha, False
-
-
-def decode_mode2(rle_data: bytes, width: int, height: int, start_y: int, draw_height: int):
-    pixels = bytearray(width * height)
-    alpha = bytearray(width * height)
-    end_y = min(start_y + draw_height, height)
-    data_idx = 0
-    
-    for y in range(max(0, start_y), end_y):
-        x = 0
-        while data_idx < len(rle_data):
-            byte = rle_data[data_idx]
-            data_idx += 1
-            count = byte & 0x3F
-            command = (byte >> 6) & 0x03
-            
-            if count == 0:
+def parse_res_sections(file_path: str) -> list[dict]:
+    sections = []
+    with open(file_path, 'rb') as file:
+        resource_count = struct.unpack('<I', file.read(4))[0]
+        for _ in range(resource_count):
+            header_bytes = file.read(SECTION_HEADER_SIZE)
+            if len(header_bytes) < SECTION_HEADER_SIZE:
                 break
-            if command == 0:
-                x += count
-            elif command == 1:
-                for _ in range(count):
-                    if x < width:
-                        pixels[y * width + x] = 0
-                        alpha[y * width + x] = 255
-                    x += 1
-            elif command == 2:
-                for _ in range(count):
-                    if data_idx < len(rle_data) and x < width:
-                        pixels[y * width + x] = rle_data[data_idx]
-                        alpha[y * width + x] = 255
-                    data_idx += 1
-                    x += 1
-            elif command == 3:
-                if data_idx < len(rle_data):
-                    color = rle_data[data_idx]
-                    data_idx += 1
-                    for _ in range(count):
-                        if x < width:
-                            pixels[y * width + x] = color
-                            alpha[y * width + x] = 255
-                        x += 1
-    return pixels, alpha, False
-
-
-def decode_mode6(rle_data: bytes, width: int, height: int):
-    pixels = bytearray(width * height * 4)
-    alpha = bytearray(width * height)
-    data_idx = 0
-    
-    for y in range(height):
-        x = 0
-        while x < width and data_idx < len(rle_data):
-            cmd = rle_data[data_idx]
-            data_idx += 1
-            count = cmd & 0x7F
-            repeat = (cmd >> 7) & 0x01
+                
+            skip_size = struct.unpack('<I', header_bytes[1:5])[0]
+            payload_size = skip_size - 6
             
-            if count == 0:
-                continue
-            if repeat:
-                if data_idx + 1 < len(rle_data):
-                    color16 = struct.unpack('<H', rle_data[data_idx:data_idx+2])[0]
-                    data_idx += 2
-                    b = (color16 & 0x1F) * 255 // 31
-                    g = ((color16 >> 5) & 0x1F) * 255 // 31
-                    r = ((color16 >> 10) & 0x1F) * 255 // 31
-                    for _ in range(count):
-                        if x < width:
-                            idx = (y * width + x) * 4
-                            pixels[idx:idx+4] = (r, g, b, 255)
-                            alpha[y * width + x] = 255
-                        x += 1
+            if payload_size < 0:
+                break
+                
+            payload_bytes = file.read(payload_size)
+            if len(payload_bytes) < payload_size:
+                break
+                
+            sections.append({
+                'header': header_bytes,
+                'payload': payload_bytes
+            })
+    return sections
+
+
+def extract_vid_metadata(sections: list[dict], source_index: Optional[int]) -> tuple[bytes, bytes]:
+    default_name = b'unnamed'.ljust(NAME_FIELD_SIZE, b'\x00')
+    default_metadata = b'\x00' * METADATA_FIELD_SIZE
+
+    if source_index is None or source_index < 0 or source_index >= len(sections):
+        return default_name, default_metadata
+
+    section = sections[source_index]
+    if section['header'][0] != VID_SECTION_TYPE:
+        return default_name, default_metadata
+
+    payload = section['payload']
+    if len(payload) >= NAME_FIELD_SIZE + METADATA_FIELD_SIZE:
+        name = payload[:NAME_FIELD_SIZE]
+        metadata = payload[NAME_FIELD_SIZE:NAME_FIELD_SIZE + METADATA_FIELD_SIZE]
+        return name, metadata
+        
+    return default_name, default_metadata
+
+
+def extract_vid_format_byte(sections: list[dict], source_index: Optional[int]) -> int:
+    if source_index is None or source_index < 0 or source_index >= len(sections):
+        return FORMAT_2_RLE
+
+    section = sections[source_index]
+    if section['header'][0] != VID_SECTION_TYPE:
+        return FORMAT_2_RLE
+
+    payload = section['payload']
+    header_offset = NAME_FIELD_SIZE + METADATA_FIELD_SIZE + 4
+    
+    if len(payload) >= header_offset + 1:
+        return payload[header_offset]
+        
+    return FORMAT_2_RLE
+
+
+def process_image_for_packing(image_path: str) -> tuple[int, int, bytes, bytearray, bytearray, bytearray]:
+    source_image = Image.open(image_path).convert('RGBA')
+    width, height = source_image.size
+
+    rgb_image = source_image.convert('RGB')
+    quantized_image = rgb_image.quantize(colors=255, method=Image.Quantize.MEDIANCUT)
+    
+    raw_palette = quantized_image.getpalette()
+    final_palette = bytes([0, 0, 0] + raw_palette[:765])
+    
+    indexed_data = bytearray(quantized_image.tobytes())
+    for pixel_index in range(len(indexed_data)):
+        indexed_data[pixel_index] += 1
+        
+    alpha_mask = bytearray(width * height)
+    rgba_data = bytearray(width * height * 4)
+    pixel_accessor = source_image.load()
+    
+    for y_coord in range(height):
+        for x_coord in range(width):
+            r, g, b, pixel_alpha = pixel_accessor[x_coord, y_coord]
+            flat_index = y_coord * width + x_coord
+            rgba_index = flat_index * 4
+            
+            rgba_data[rgba_index] = r
+            rgba_data[rgba_index + 1] = g
+            rgba_data[rgba_index + 2] = b
+            rgba_data[rgba_index + 3] = pixel_alpha
+            
+            if pixel_alpha < 128:
+                indexed_data[flat_index] = 0
+                alpha_mask[flat_index] = 0
             else:
-                for _ in range(count):
-                    if data_idx + 1 < len(rle_data) and x < width:
-                        color16 = struct.unpack('<H', rle_data[data_idx:data_idx+2])[0]
-                        data_idx += 2
-                        b = (color16 & 0x1F) * 255 // 31
-                        g = ((color16 >> 5) & 0x1F) * 255 // 31
-                        r = ((color16 >> 10) & 0x1F) * 255 // 31
-                        idx = (y * width + x) * 4
-                        pixels[idx:idx+4] = (r, g, b, 255)
-                        alpha[y * width + x] = 255
-                    else:
-                        data_idx += 2
-                    x += 1
-    return pixels, alpha, True
+                alpha_mask[flat_index] = 255
+                
+    return width, height, final_palette, indexed_data, alpha_mask, rgba_data
 
 
-def decode_mode8(rle_data: bytes, width: int, height: int, start_y: int, draw_height: int):
-    pixels = bytearray(width * height)
-    alpha = bytearray(width * height)
-    end_y = min(start_y + draw_height, height)
-    data_idx = 0
+def encode_mode0(indexed_data: bytearray, alpha_mask: bytearray, width: int, height: int) -> tuple[bytes, bytes]:
+    return b'', bytes(indexed_data)
+
+
+def encode_format2_rle(indexed_data: bytearray, alpha_mask: bytearray, width: int, height: int) -> tuple[bytes, bytes]:
+    top_row = height
+    bottom_row = -1
     
-    for y in range(max(0, start_y), end_y):
-        x = 0
-        while data_idx < len(rle_data):
-            cmd = rle_data[data_idx]
-            data_idx += 1
-            count = cmd & 0x1F
-            opacity = (cmd >> 5) & 0x07
+    for y_coord in range(height):
+        for x_coord in range(width):
+            if alpha_mask[y_coord * width + x_coord] > 0:
+                if y_coord < top_row: top_row = y_coord
+                if y_coord > bottom_row: bottom_row = y_coord
+                break
+                
+    if bottom_row == -1:
+        return struct.pack('<hh', 0, 0), b''
+        
+    visible_height = bottom_row - top_row + 1
+    rle_stream = bytearray()
+    
+    for y_coord in range(top_row, bottom_row + 1):
+        x_coord = 0
+        while x_coord < width:
+            current_pixel_index = y_coord * width + x_coord
             
-            if count == 0:
-                break
-            if opacity == 0:
-                x += count
+            if alpha_mask[current_pixel_index] == 0:
+                skip_length = 0
+                while (x_coord + skip_length < width and 
+                       alpha_mask[y_coord * width + x_coord + skip_length] == 0 and 
+                       skip_length < 63):
+                    skip_length += 1
+                rle_stream.append(skip_length & 0x3F)
+                x_coord += skip_length
             else:
-                for _ in range(count):
-                    if data_idx < len(rle_data) and x < width:
-                        pixels[y * width + x] = rle_data[data_idx]
-                        alpha[y * width + x] = 255
-                    data_idx += 1
-                    x += 1
-    return pixels, alpha, False
-
-
-class GromadaUnpacker:
-    def __init__(self, file_path: str, out_dir: str):
-        self.file_path = file_path
-        self.out_dir = out_dir
-        self.unpacked_vids_count = 0
-        os.makedirs(out_dir, exist_ok=True)
-
-    def run(self):
-        with open(self.file_path, 'rb') as f:
-            resource_count = struct.unpack('<I', f.read(4))[0]
-            print(f"[*] Archive contains {resource_count} resources")
-
-            section_idx = 0
-            while True:
-                hdr_bytes = f.read(SECTION_HEADER_SIZE)
-                if len(hdr_bytes) < SECTION_HEADER_SIZE:
-                    break
-
-                sec_id = hdr_bytes[0]
-                skip_size = struct.unpack('<I', hdr_bytes[1:5])[0]
-                payload_size = skip_size - 6
-                if payload_size < 0:
-                    break
-
-                payload = f.read(payload_size)
-                if len(payload) < payload_size:
-                    break
-
-                if sec_id == 0x21:
-                    self._parse_vid_section(payload, section_idx)
-
-                section_idx += 1
-
-        print(f"\n[✓] Unpacked {self.unpacked_vids_count} Vids successfully to {self.out_dir}")
-
-    def _parse_vid_section(self, payload: bytes, section_idx: int):
-        pos = 0
-        while pos < len(payload):
-            if pos + NAME_SIZE > len(payload):
-                break
-            raw_name = payload[pos:pos + NAME_SIZE]
-            pos += NAME_SIZE
-            name_str = sanitize_filename(raw_name)
-
-            pos += METADATA_SIZE
-
-            if pos + 4 > len(payload):
-                break
-            payload_size_or_clone_index = struct.unpack('<i', payload[pos:pos + 4])[0]
-            pos += 4
-
-            if payload_size_or_clone_index < 0:
-                continue
-
-            if pos + PIXEL_HEADER_SIZE > len(payload):
-                break
-            pix_hdr = payload[pos:pos + PIXEL_HEADER_SIZE]
-            pos += PIXEL_HEADER_SIZE
-
-            format_byte = pix_hdr[0]
-            frame_count = struct.unpack('<H', pix_hdr[3:5])[0]
-            width = struct.unpack('<H', pix_hdr[9:11])[0]
-            height = struct.unpack('<H', pix_hdr[11:13])[0]
-
-            if width <= 0 or height <= 0 or width > 4096 or height > 4096:
-                width, height = 1, 1
-
-            if pos + PALETTE_SIZE > len(payload):
-                break
-            pal_data = payload[pos:pos + PALETTE_SIZE]
-            pos += PALETTE_SIZE
-
-            pal_8bit = list(pal_data)
-            if pal_8bit and max(pal_8bit) <= 63:
-                pal_8bit = [v << 2 for v in pal_8bit]
-            pal_8bit = [min(255, max(0, v)) for v in pal_8bit]
-            if len(pal_8bit) < PALETTE_SIZE:
-                pal_8bit += [0] * (PALETTE_SIZE - len(pal_8bit))
-
-            self.unpacked_vids_count += 1
-            print(f"  [{self.unpacked_vids_count:03d}] Unpacking: {name_str} ({frame_count} frames)")
-
-            for frame_idx in range(frame_count):
-                if pos + 4 > len(payload):
-                    break
-                frame_size = struct.unpack('<I', payload[pos:pos + 4])[0]
-                pos += 4
-
-                if pos + 2 > len(payload):
-                    break
-                share_index = struct.unpack('<h', payload[pos:pos + 2])[0]
-                pos += 2
-
-                remaining_in_block = frame_size - 6
-                if remaining_in_block < 0:
-                    remaining_in_block = 0
-
-                if share_index != -1 or frame_size <= 6:
-                    pos += remaining_in_block
-                    continue
-
-                y_offset = 0
-                draw_height = height
-
-                if format_byte in BOUNDING_BOX_FORMATS:
-                    if pos + 4 > len(payload):
-                        break
-                    y_offset = struct.unpack('<h', payload[pos:pos + 2])[0]
-                    draw_height = struct.unpack('<H', payload[pos + 2:pos + 4])[0]
-                    pos += 4
-                    rle_data_len = frame_size - 6
-                else:
-                    rle_data_len = frame_size - 2
-
-                rle_data = payload[pos:pos + rle_data_len]
-                pos += rle_data_len
-
-                if format_byte in SKIPPED_FORMATS:
-                    continue
-
-                if format_byte in [0, 64, 70]:
-                    pixels, alpha, is_rgba = decode_mode0(rle_data, width, height)
-                elif format_byte == 2:
-                    pixels, alpha, is_rgba = decode_mode2(rle_data, width, height, y_offset, draw_height)
-                elif format_byte == 6:
-                    pixels, alpha, is_rgba = decode_mode6(rle_data, width, height)
-                elif format_byte in [7, 8]:
-                    pixels, alpha, is_rgba = decode_mode8(rle_data, width, height, y_offset, draw_height)
-                else:
-                    pixels, alpha, is_rgba = bytearray(width * height), bytearray(width * height), False
-
-                img = Image.new('RGBA', (width, height), (0, 0, 0, 0))
-                rgba_data = []
-                for idx in range(width * height):
-                    if alpha[idx] == 0:
-                        rgba_data.append((0, 0, 0, 0))
-                    else:
-                        if is_rgba:
-                            rgba_data.append((pixels[idx * 4], pixels[idx * 4 + 1], pixels[idx * 4 + 2], pixels[idx * 4 + 3]))
-                        else:
-                            palette_idx = pixels[idx]
-                            rgba_data.append((pal_8bit[palette_idx * 3], pal_8bit[palette_idx * 3 + 1], pal_8bit[palette_idx * 3 + 2], alpha[idx]))
-                img.putdata(rgba_data)
-
-                if frame_count == 1:
-                    img_name = f"vid_{section_idx:03d}_{name_str}.png"
-                else:
-                    img_name = f"vid_{section_idx:03d}_{name_str}_f{frame_idx:02d}.png"
+                copy_length = 0
+                while (x_coord + copy_length < width and 
+                       alpha_mask[y_coord * width + x_coord + copy_length] > 0 and 
+                       copy_length < 63):
+                    copy_length += 1
                     
-                img.save(os.path.join(self.out_dir, img_name))
+                rle_stream.append(0x80 | (copy_length & 0x3F))
+                for offset in range(copy_length):
+                    rle_stream.append(indexed_data[y_coord * width + x_coord + offset])
+                x_coord += copy_length
+                
+        rle_stream.append(0x00)
+        
+    bounding_box = struct.pack('<hh', top_row, visible_height)
+    return bounding_box, bytes(rle_stream)
+
+
+def encode_mode6(rgba_data: bytearray, width: int, height: int) -> tuple[bytes, bytes]:
+    rle_stream = bytearray()
+    for y_coord in range(height):
+        x_coord = 0
+        while x_coord < width:
+            idx = (y_coord * width + x_coord) * 4
+            alpha = rgba_data[idx + 3]
+            
+            if alpha == 0:
+                skip_length = 0
+                while (x_coord + skip_length < width and 
+                       rgba_data[(y_coord * width + x_coord + skip_length) * 4 + 3] == 0 and 
+                       skip_length < 127):
+                    skip_length += 1
+                rle_stream.append(skip_length & 0x7F)
+                x_coord += skip_length
+            else:
+                r, g, b = rgba_data[idx], rgba_data[idx + 1], rgba_data[idx + 2]
+                color16 = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3)
+                
+                fill_length = 0
+                is_fill = True
+                while x_coord + fill_length < width and fill_length < 127:
+                    n_idx = (y_coord * width + x_coord + fill_length) * 4
+                    if rgba_data[n_idx + 3] == 0: break
+                    cr, cg, cb = rgba_data[n_idx], rgba_data[n_idx + 1], rgba_data[n_idx + 2]
+                    c16 = ((cr >> 3) << 10) | ((cg >> 3) << 5) | (cb >> 3)
+                    if c16 != color16:
+                        is_fill = False
+                        break
+                    fill_length += 1
+                
+                if is_fill and fill_length > 2:
+                    rle_stream.append(0x80 | (fill_length & 0x7F))
+                    rle_stream.extend(struct.pack('<H', color16))
+                    x_coord += fill_length
+                else:
+                    copy_length = 0
+                    while x_coord + copy_length < width and copy_length < 127:
+                        n_idx = (y_coord * width + x_coord + copy_length) * 4
+                        if rgba_data[n_idx + 3] == 0: break
+                        copy_length += 1
+                    rle_stream.append(copy_length & 0x7F)
+                    for i in range(copy_length):
+                        n_idx = (y_coord * width + x_coord + i) * 4
+                        cr, cg, cb = rgba_data[n_idx], rgba_data[n_idx + 1], rgba_data[n_idx + 2]
+                        c16 = ((cr >> 3) << 10) | ((cg >> 3) << 5) | (cb >> 3)
+                        rle_stream.extend(struct.pack('<H', c16))
+                    x_coord += copy_length
+                    
+    return b'', bytes(rle_stream)
+
+
+def encode_mode8(indexed_data: bytearray, alpha_mask: bytearray, width: int, height: int) -> tuple[bytes, bytes]:
+    top_row = height
+    bottom_row = -1
+    
+    for y_coord in range(height):
+        for x_coord in range(width):
+            if alpha_mask[y_coord * width + x_coord] > 0:
+                if y_coord < top_row: top_row = y_coord
+                if y_coord > bottom_row: bottom_row = y_coord
+                break
+                
+    if bottom_row == -1:
+        return struct.pack('<hh', 0, 0), b''
+        
+    visible_height = bottom_row - top_row + 1
+    rle_stream = bytearray()
+    
+    for y_coord in range(top_row, bottom_row + 1):
+        x_coord = 0
+        while x_coord < width:
+            current_pixel_index = y_coord * width + x_coord
+            
+            if alpha_mask[current_pixel_index] == 0:
+                skip_length = 0
+                while (x_coord + skip_length < width and 
+                       alpha_mask[y_coord * width + x_coord + skip_length] == 0 and 
+                       skip_length < 31):
+                    skip_length += 1
+                rle_stream.append(skip_length & 0x1F)
+                x_coord += skip_length
+            else:
+                copy_length = 0
+                while (x_coord + copy_length < width and 
+                       alpha_mask[y_coord * width + x_coord + copy_length] > 0 and 
+                       copy_length < 31):
+                    copy_length += 1
+                    
+                rle_stream.append(0xE0 | (copy_length & 0x1F))
+                for offset in range(copy_length):
+                    rle_stream.append(indexed_data[y_coord * width + x_coord + offset])
+                x_coord += copy_length
+                
+        rle_stream.append(0x00)
+        
+    bounding_box = struct.pack('<hh', top_row, visible_height)
+    return bounding_box, bytes(rle_stream)
+
+
+def build_frame_block(bounding_box: bytes, rle_stream: bytes) -> bytes:
+    share_index_bytes = struct.pack('<h', DIRECT_FRAME_SHARE_INDEX)
+    frame_data_bytes = bounding_box + rle_stream
+    frame_block_size = 2 + len(frame_data_bytes)
+    
+    block = bytearray()
+    block.extend(struct.pack('<I', frame_block_size))
+    block.extend(share_index_bytes)
+    block.extend(frame_data_bytes)
+    return bytes(block)
+
+
+def build_vid_payload(name: bytes, metadata: bytes, palette: bytes, frame_block: bytes, width: int, height: int, format_byte: int) -> bytes:
+    pixel_header = bytearray(PIXEL_HEADER_SIZE)
+    pixel_header[0] = format_byte
+    struct.pack_into('<H', pixel_header, 3, 1)
+    struct.pack_into('<I', pixel_header, 5, PALETTE_SIZE + len(frame_block))
+    struct.pack_into('<H', pixel_header, 9, width)
+    struct.pack_into('<H', pixel_header, 11, height)
+
+    payload_size = PIXEL_HEADER_SIZE + PALETTE_SIZE + len(frame_block)
+    
+    payload = bytearray()
+    payload.extend(name)
+    payload.extend(metadata)
+    payload.extend(struct.pack('<i', payload_size))
+    payload.extend(pixel_header)
+    payload.extend(palette)
+    payload.extend(frame_block)
+    return bytes(payload)
+
+
+def build_section_header(payload_size: int) -> bytes:
+    header = bytearray(SECTION_HEADER_SIZE)
+    header[0] = VID_SECTION_TYPE
+    struct.pack_into('<I', header, 1, payload_size + 6)
+    struct.pack_into('<I', header, 5, 1)
+    struct.pack_into('<H', header, 9, 0)
+    return bytes(header)
+
+
+def print_format_notes():
+    print("\n--- Gromada Vid Format Reference ---")
+    print("Format 0, 64, 70 : Raw indexed pixels. Used for full backgrounds, UI, or simple sprites without RLE compression.")
+    print("Format 2         : 2-bit RLE with 1-bit alpha mask. The standard format for units, buildings, and projectiles.")
+    print("Format 3         : Grayscale Light/Shadow Mask. Pre-baked 3D lighting overlay. (Cannot be generated from PNG)")
+    print("Format 4         : RGB Colored Light Mask. Pre-baked colored lighting overlay. (Cannot be generated from PNG)")
+    print("Format 5         : 1-bit Monochrome RLE. Used for pure shadow masks or selection circles. (Not supported for packing)")
+    print("Format 6         : 16-bit Direct Color (RGB555). Used for high-color UI elements or pre-rendered video frames.")
+    print("Format 7, 8      : 3-bit Opacity RLE. Used for semi-transparent effects like glass, fire, and energy shields.")
+    print("------------------------------------\n")
+
+
+def main():
+    epilog_text = """
+================================================================================
+                            GROMADA .RES PACKER
+================================================================================
+This tool converts standard images (PNG, BMP, etc.) into the Gromada engine's 
+internal Vid format and injects them into a .res archive.
+
+It automatically reads the original archive to preserve critical 229-byte 
+metadata blocks, names, and palettes. If adding a completely new asset, it 
+generates a new optimized 256-color palette.
+
+OPERATION MODES:
+  --mode replace  (Default) Overwrites an existing resource in the archive.
+                  Requires --target-index.
+  --mode add      Appends a brand new resource to the very end of the archive.
+
+EXAMPLES:
+  1. Replace an existing unit sprite (e.g., resource index 42):
+     python gromada_pack.py fw.res my_new_tank.png --target-index 42 --backup
+
+  2. Add a completely new custom sprite to the end of the archive:
+     python gromada_pack.py fw.res custom_explosion.png --mode add --backup
+
+  3. Replace index 50, but copy the name/metadata from index 12:
+     python gromada_pack.py fw.res new_graphic.png --target-index 50 --meta-source-index 12
+
+SUPPORTED VID FORMATS (Auto-detected from target resource):
+  Format 0, 64, 70 : Raw indexed pixels. (Backgrounds, UI, simple sprites)
+  Format 2         : 2-bit RLE with 1-bit alpha mask. (Standard units, buildings)
+  Format 6         : 16-bit Direct Color (RGB555). (High-color UI, video frames)
+  Format 7, 8      : 3-bit Opacity RLE. (Glass, fire, energy shields)
+
+UNSUPPORTED VID FORMATS (Pre-baked 3D data, cannot be generated from PNGs):
+  Format 3         : Grayscale Light/Shadow Mask.
+  Format 4         : RGB Colored Light Mask.
+  Format 5         : 1-bit Monochrome RLE (Pure shadow masks).
+================================================================================
+"""
+
+    parser = argparse.ArgumentParser(
+        description="Gromada .res Packer - Inject custom images into game archives.",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog=epilog_text
+    )
+    parser.add_argument('res_file', help="Path to the .res archive")
+    parser.add_argument('image_file', help="Path to the input image")
+    parser.add_argument('--target-index', type=int, help="Index of the resource to replace (required for 'replace' mode)")
+    parser.add_argument('--meta-source-index', type=int, help="Index of the resource to copy name, metadata, and format from")
+    parser.add_argument('--mode', choices=['replace', 'add'], default='replace', help="Operation mode")
+    parser.add_argument('--backup', action='store_true', help="Create a .bak backup")
+    args = parser.parse_args()
+
+    if args.backup and os.path.exists(args.res_file):
+        shutil.copy2(args.res_file, args.res_file + '.bak')
+
+    if args.mode == 'replace' and args.target_index is None:
+        print("[!] Error: --target-index is required for 'replace' mode.")
+        sys.exit(1)
+
+    sections = parse_res_sections(args.res_file)
+    
+    metadata_source_index = args.meta_source_index if args.meta_source_index is not None else args.target_index
+    name, metadata = extract_vid_metadata(sections, metadata_source_index)
+    format_byte = extract_vid_format_byte(sections, metadata_source_index)
+
+    if format_byte not in SUPPORTED_FORMATS:
+        print(f"[!] Error: Format {format_byte} is not supported for packing from standard images.")
+        print_format_notes()
+        sys.exit(1)
+
+    width, height, palette, indexed_data, alpha_mask, rgba_data = process_image_for_packing(args.image_file)
+    
+    if format_byte in [FORMAT_0_RAW, 64, 70]:
+        bounding_box, rle_stream = encode_mode0(indexed_data, alpha_mask, width, height)
+    elif format_byte == FORMAT_6_RGB:
+        bounding_box, rle_stream = encode_mode6(rgba_data, width, height)
+    elif format_byte in [7, FORMAT_8_ALPHA]:
+        bounding_box, rle_stream = encode_mode8(indexed_data, alpha_mask, width, height)
+    else:
+        bounding_box, rle_stream = encode_format2_rle(indexed_data, alpha_mask, width, height)
+        
+    frame_block = build_frame_block(bounding_box, rle_stream)
+    vid_payload = build_vid_payload(name, metadata, palette, frame_block, width, height, format_byte)
+    section_header = build_section_header(len(vid_payload))
+
+    if args.mode == 'replace':
+        if args.target_index < 0 or args.target_index >= len(sections):
+            print(f"[!] Error: Target index {args.target_index} is out of bounds. Cannot replace.")
+            sys.exit(1)
+            
+        if sections[args.target_index]['header'][0] != VID_SECTION_TYPE:
+            print(f"[!] Error: Resource at index {args.target_index} is not a Vid section. Cannot replace.")
+            sys.exit(1)
+            
+        sections[args.target_index]['header'] = section_header
+        sections[args.target_index]['payload'] = vid_payload
+        print(f"[+] Replaced resource at index {args.target_index} using Format {format_byte}")
+    else:
+        sections.append({
+            'header': section_header,
+            'payload': vid_payload
+        })
+        print(f"[+] Added new resource at index {len(sections) - 1} using Format {format_byte}")
+
+    with open(args.res_file, 'wb') as file:
+        file.write(struct.pack('<I', len(sections)))
+        for section in sections:
+            file.write(section['header'])
+            file.write(section['payload'])
+            
+    print(f"[+] Successfully packed {args.res_file}")
 
 
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print("Usage: python gromada_unpack.py <file.res> <out_dir>")
-        sys.exit(1)
-    GromadaUnpacker(sys.argv[1], sys.argv[2]).run()
+    main()
