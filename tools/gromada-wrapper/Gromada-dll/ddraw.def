@@ -1,0 +1,9 @@
+LIBRARY "ddraw"
+EXPORTS
+    DirectDrawCreate        @1
+    DirectDrawEnumerateA    @2
+    DirectDrawEnumerateW    @3
+    DllCanUnloadNow         @4  PRIVATE
+    DllGetClassObject       @5  PRIVATE
+    DirectDrawCreateEx      @6
+    DirectDrawCreateClipper @7
