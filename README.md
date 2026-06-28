@@ -1,5 +1,5 @@
 # Описание
-Форматы игры **Дорога на Хон-Ка-Ду** (2003), **Alien Shooter** (2003). Здесь [шаблоны 010 Editor](https://github.com/AlexKimov/locoland-formats/tree/master/templates). Здесь [скрипты](https://github.com/AlexKimov/locoland-formats/tree/master/scripts) для работы с форматами.
+Форматы игры **Громада** (1999),  **Дорога на Хон-Ка-Ду** (2003), **Alien Shooter** (2003). Здесь [шаблоны 010 Editor](https://github.com/AlexKimov/locoland-formats/tree/master/templates). Здесь [скрипты](https://github.com/AlexKimov/locoland-formats/tree/master/scripts) для работы с форматами.
 
 #### Текущие планы:
 1. Доработка шаблона формата .map **Alien Shooter 1**.
@@ -20,6 +20,11 @@
 * [VIDtoBMP.1sc](https://github.com/AlexKimov/locoland-formats/blob/master/scripts/VIDtoBMP.1sc) - конвертирование/распаковка **.vid** на отдельные **.bmp** файлы (в работе).
 #### noesis
 * [fmt_sl_vid.py](https://github.com/AlexKimov/locoland-formats/blob/master/scripts/fmt_sl_vid.py) - просмотр **.vid**
+
+### Программы
+
+* [gromada_wrapper_dll_0.1]([https://github.com/AlexKimov/locoland-formats/blob/master/scripts/VIDtoBMP.1sc](https://github.com/AlexKimov/locoland-formats/releases/tag/0.1)) - библотека для игры Громада, которая подменяет графическое Api игры на DirectX 9 и может момочь с запуском игры на современных системах
+
 
 ***
 # About
