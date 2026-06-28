@@ -23,8 +23,7 @@
 
 ### Программы
 
-* [gromada_wrapper_dll_0.1]([https://github.com/AlexKimov/locoland-formats/blob/master/scripts/VIDtoBMP.1sc](https://github.com/AlexKimov/locoland-formats/releases/tag/0.1)) - библотека для игры Громада, которая подменяет графическое Api игры на DirectX 9 и может момочь с запуском игры на современных системах
-
+* [gromada_wrapper_dll_0.1]([releases/tag/0.1) - библотека для игры Громада, которая подменяет графическое Api игры на DirectX 9 и может помочь с запуском игры на современных системах
 
 ***
 # About
